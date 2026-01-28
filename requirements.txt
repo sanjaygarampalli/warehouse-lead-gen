@@ -2,7 +2,6 @@ streamlit
 pandas
 requests
 python-dotenv
-google-search-results
 PyPDF2
 phonenumbers
 folium
