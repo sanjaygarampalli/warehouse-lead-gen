@@ -5,3 +5,4 @@ PyPDF2
 folium
 streamlit-folium
 phonenumbers
+python-dotenv
