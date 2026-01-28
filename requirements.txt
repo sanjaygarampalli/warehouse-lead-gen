@@ -1,9 +1,5 @@
 streamlit
 pandas
 requests
-PyPDF2
 folium
 streamlit-folium
-phonenumbers
-python-dotenv
-google-search-results
