@@ -16,8 +16,8 @@ load_dotenv()
 st.set_page_config(page_title="Warehouse Lead Pro", layout="wide", page_icon="🏗️")
 
 # Helper for API Keys (Local .env or Streamlit Secrets)
-def get_api_key(name):
-    return os.getenv(name) or st.secrets.get(name)
+# Streamlit Cloud will look for this in your "Advanced Settings > Secrets"
+serp_key = st.secrets.get("SERPAPI_KEY")
 
 # --- MOCK DATA FOR DEMO ---
 def get_mock_leads():
