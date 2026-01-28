@@ -1,8 +1,9 @@
 streamlit
 pandas
 requests
-PyPDF2
 folium
 streamlit-folium
 phonenumbers
+PyPDF2
+google-search-results
 python-dotenv
