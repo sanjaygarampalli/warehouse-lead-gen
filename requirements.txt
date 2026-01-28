@@ -5,3 +5,5 @@ folium
 streamlit-folium
 phonenumbers
 PyPDF2
+geopy
+Pillow
