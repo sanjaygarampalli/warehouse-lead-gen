@@ -1,8 +1,7 @@
 streamlit
 pandas
 requests
-python-dotenv
 PyPDF2
-phonenumbers
 folium
 streamlit-folium
+phonenumbers
