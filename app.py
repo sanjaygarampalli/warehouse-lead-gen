@@ -2,67 +2,98 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
+from PyPDF2 import PdfReader
 from PIL import Image
+import io
 
-# --- INITIALIZATION ---
-st.set_page_config(page_title="Samketan AI: Warehouse Leads", layout="wide")
+# --- APP CONFIG ---
+st.set_page_config(page_title="Samketan AI: Lead Pro", layout="wide", page_icon="🏗️")
 
-# This keeps your results from disappearing!
-if "search_results" not in st.session_state:
-    st.session_state.search_results = None
+if "leads" not in st.session_state:
+    st.session_state.leads = None
 
-# --- APP UI ---
-st.title("🏗️ Samketan AI: Lead Generation")
-st.markdown("Customize your warehouse requirements to find matching tenants.")
+# --- UI HEADER ---
+st.title("🏗️ Samketan AI: Warehouse Lead Generator")
+st.write("Input your warehouse details to find and verify the best matching tenants.")
 
-# 1. CUSTOMIZATION SECTION
-with st.expander("🛠️ Customize Warehouse Requirements", expanded=True):
-    col1, col2 = st.columns(2)
-    with col1:
-        w_name = st.text_input("Warehouse Name", value="Bhoodevi Warehouse")
-        w_area = st.number_input("Built-up Area (sq ft)", value=21000)
-        w_location = st.text_input("Location", value="Kalaburagi, Karnataka")
+# --- INPUT SECTION ---
+with st.sidebar:
+    st.header("📍 Warehouse Geography")
+    st.write("Click on the map to set your warehouse coordinates.")
+    m_input = folium.Map(location=[17.3297, 76.8343], zoom_start=12)
+    m_input.add_child(folium.LatLngPopup())
+    map_data = st_folium(m_input, height=300, width=300)
     
-    with col2:
-        industries = st.multiselect(
-            "Target Industries", 
-            ["FMCG", "Pharma", "E-commerce", "Logistics", "Manufacturing", "Packaging"],
-            default=["FMCG", "Pharma"]
-        )
-        # PHOTO UPLOAD FEATURE
-        uploaded_images = st.file_uploader("Upload Warehouse Photos", type=["jpg", "png", "jpeg"], accept_multiple_files=True)
+    # Capture Coordinates
+    lat, lng = 17.3297, 76.8343
+    if map_data.get("last_clicked"):
+        lat = map_data["last_clicked"]["lat"]
+        lng = map_data["last_clicked"]["lng"]
+    st.success(f"Coordinates: {lat:.4f}, {lng:.4f}")
 
-# Display uploaded photos immediately
-if uploaded_images:
-    st.subheader("📸 Warehouse Gallery")
-    cols = st.columns(len(uploaded_images))
-    for idx, img_file in enumerate(uploaded_images):
-        img = Image.open(img_file)
-        cols[idx].image(img, use_container_width=True, caption=f"Image {idx+1}")
+st.subheader("📝 Warehouse Specifications")
+col1, col2 = st.columns(2)
 
-# 2. SEARCH BUTTON
-if st.button("🚀 Find & Verify Leads"):
-    with st.spinner("Searching live data..."):
-        # Simulated search logic (you can connect your API key here)
-        mock_data = pd.DataFrame([
-            {"Company": "Global Logistics Ltd", "Type": "3PL", "Contact": "+91 9900011122", "Match": "98%"},
-            {"Company": "PurePharma Labs", "Type": "Pharma", "Contact": "+91 8877665544", "Match": "92%"},
-            {"Company": "QuickPack Solutions", "Type": "Packaging", "Contact": "+91 7766554433", "Match": "85%"}
+with col1:
+    w_text = st.text_area("Describe your Warehouse (Text Input)", 
+                          placeholder="Example: 21,000 sq ft RCC warehouse in Kalaburagi with 4 loading docks...")
+    w_pdf = st.file_uploader("Upload Warehouse Brochure (PDF)", type="pdf")
+
+with col2:
+    w_photos = st.file_uploader("Upload Warehouse Photos (Optional)", type=["jpg", "png", "jpeg"], accept_multiple_files=True)
+    if w_photos:
+        st.write(f"✅ {len(w_photos)} photos uploaded.")
+
+# --- PROCESSING LOGIC ---
+if st.button("🚀 Generate Matching Leads"):
+    with st.spinner("Analyzing requirements and searching web..."):
+        # Placeholder for AI logic that parses PDF/Text and searches via Serper API
+        # Output columns as requested by the user
+        st.session_state.leads = pd.DataFrame([
+            {
+                "Company": "Bhoomi FMCG Pvt Ltd",
+                "Type": "Distributor",
+                "Position": "Supply Chain Manager",
+                "Person Name": "Sanjay G",
+                "Person Mail ID": "sanjay@bhoomi.in",
+                "Person LinkedIn Profile ID": "linkedin.com/in/sanjayg",
+                "Contact": "+91 9845000000",
+                "Match": "98%"
+            },
+            {
+                "Company": "Safe-Med Pharma",
+                "Type": "Manufacturing",
+                "Position": "Logistics Head",
+                "Person Name": "Ananya Rao",
+                "Person Mail ID": "arao@safemed.com",
+                "Person LinkedIn Profile ID": "linkedin.com/in/arao-logs",
+                "Contact": "+91 8050011122",
+                "Match": "92%"
+            }
         ])
-        st.session_state.search_results = mock_data
 
-# 3. PERSISTENT RESULTS DISPLAY
-if st.session_state.search_results is not None:
+# --- OUTPUT SECTION ---
+if st.session_state.leads is not None:
     st.divider()
-    st.subheader("🎯 Best Match Leads")
-    st.dataframe(st.session_state.search_results, use_container_width=True)
+    st.subheader("🎯 Identified Lead Prospects")
     
-    # Map View
-    st.subheader("📍 Proximity Analysis")
-    m = folium.Map(location=[17.3297, 76.8343], zoom_start=12)
-    folium.Marker([17.3297, 76.8343], popup=w_name, icon=folium.Icon(color='red', icon='warehouse', prefix='fa')).add_to(m)
-    st_folium(m, width=1200, height=400)
+    # The requested output table
+    st.dataframe(
+        st.session_state.leads,
+        column_config={
+            "Person LinkedIn Profile ID": st.column_config.LinkColumn("LinkedIn"),
+            "Person Mail ID": st.column_config.TextColumn("Email"),
+        },
+        use_container_width=True,
+        hide_index=True
+    )
     
-    # Export
-    csv = st.session_state.search_results.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Download Lead List", data=csv, file_name="warehouse_leads.csv", mime="text/csv")
+    # Map Visualization
+    st.subheader("🗺️ Proximity Map")
+    m_output = folium.Map(location=[lat, lng], zoom_start=13)
+    folium.Marker([lat, lng], popup="Your Warehouse", icon=folium.Icon(color='red', icon='warehouse', prefix='fa')).add_to(m_output)
+    st_folium(m_output, width=1300, height=400)
+    
+    # Download
+    csv = st.session_state.leads.to_csv(index=False).encode('utf-8')
+    st.download_button("📥 Export Lead List to CSV", data=csv, file_name="warehouse_leads.csv", mime="text/csv")
