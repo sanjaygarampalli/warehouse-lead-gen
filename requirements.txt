@@ -6,3 +6,4 @@ folium
 streamlit-folium
 phonenumbers
 python-dotenv
+google-search-results
