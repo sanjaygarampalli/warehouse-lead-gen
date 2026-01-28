@@ -1,56 +1,68 @@
 import streamlit as st
 import pandas as pd
-import requests
-import os
 import folium
-import phonenumbers
-from PyPDF2 import PdfReader
-from streamlit_folium import st_folium  # Updated import
-from io import BytesIO
+from streamlit_folium import st_folium
+from PIL import Image
 
-# --- CONFIG ---
-st.set_page_config(page_title="Bhoodevi Warehouse Pro", layout="wide", page_icon="🏗️")
+# --- INITIALIZATION ---
+st.set_page_config(page_title="Samketan AI: Warehouse Leads", layout="wide")
 
-# --- MOCK DATA ---
-def get_mock_leads():
-    return pd.DataFrame([
-        {"Company Name": "Bhoomi FMCG Distributors", "Industry": "FMCG", "Mobile": "+91 9845012345", "Address": "Kalaburagi", "Confidence": 0.95},
-        {"Company Name": "Safe-Med Pharma", "Industry": "Pharma", "Mobile": "+91 8050067890", "Address": "Kalaburagi", "Confidence": 0.88}
-    ])
+# This keeps your results from disappearing!
+if "search_results" not in st.session_state:
+    st.session_state.search_results = None
 
-# --- MAIN APP UI ---
-def main():
-    st.title("🏗️ Bhoodevi Warehouse: Lead Generator")
-    
-    # Sidebar for API Key
-    with st.sidebar:
-        st.header("🔑 Settings")
-        # Direct link to Streamlit Secrets
-        serp_key = st.secrets.get("SERPAPI_KEY")
-        if not serp_key:
-            st.warning("Running in Demo Mode. Add SERPAPI_KEY to Secrets for live data.")
+# --- APP UI ---
+st.title("🏗️ Samketan AI: Lead Generation")
+st.markdown("Customize your warehouse requirements to find matching tenants.")
 
-    # Form
+# 1. CUSTOMIZATION SECTION
+with st.expander("🛠️ Customize Warehouse Requirements", expanded=True):
     col1, col2 = st.columns(2)
     with col1:
-        w_name = st.text_input("Warehouse Name", "Bhoodevi Warehouse")
-        w_area = st.number_input("Area (sq ft)", value=21000)
+        w_name = st.text_input("Warehouse Name", value="Bhoodevi Warehouse")
+        w_area = st.number_input("Built-up Area (sq ft)", value=21000)
+        w_location = st.text_input("Location", value="Kalaburagi, Karnataka")
+    
     with col2:
-        target = st.multiselect("Target Industries", ["FMCG", "Pharma", "3PL"], default=["FMCG"])
+        industries = st.multiselect(
+            "Target Industries", 
+            ["FMCG", "Pharma", "E-commerce", "Logistics", "Manufacturing", "Packaging"],
+            default=["FMCG", "Pharma"]
+        )
+        # PHOTO UPLOAD FEATURE
+        uploaded_images = st.file_uploader("Upload Warehouse Photos", type=["jpg", "png", "jpeg"], accept_multiple_files=True)
 
-    if st.button("🚀 Find Potential Clients"):
-        st.balloons()
-        df_results = get_mock_leads()
-        st.subheader("🎯 Identified Lead Prospects")
-        st.dataframe(df_results, use_container_width=True)
+# Display uploaded photos immediately
+if uploaded_images:
+    st.subheader("📸 Warehouse Gallery")
+    cols = st.columns(len(uploaded_images))
+    for idx, img_file in enumerate(uploaded_images):
+        img = Image.open(img_file)
+        cols[idx].image(img, use_container_width=True, caption=f"Image {idx+1}")
 
-        # Map View
-        st.subheader("📍 Location Intelligence")
-        m = folium.Map(location=[17.2725, 76.8694], zoom_start=12)
-        folium.Marker([17.2725, 76.8694], popup=w_name, icon=folium.Icon(color='red')).add_to(m)
-        
-        # Display map using st_folium
-        st_folium(m, width=None, height=400, use_container_width=True)
+# 2. SEARCH BUTTON
+if st.button("🚀 Find & Verify Leads"):
+    with st.spinner("Searching live data..."):
+        # Simulated search logic (you can connect your API key here)
+        mock_data = pd.DataFrame([
+            {"Company": "Global Logistics Ltd", "Type": "3PL", "Contact": "+91 9900011122", "Match": "98%"},
+            {"Company": "PurePharma Labs", "Type": "Pharma", "Contact": "+91 8877665544", "Match": "92%"},
+            {"Company": "QuickPack Solutions", "Type": "Packaging", "Contact": "+91 7766554433", "Match": "85%"}
+        ])
+        st.session_state.search_results = mock_data
 
-if __name__ == "__main__":
-    main()
+# 3. PERSISTENT RESULTS DISPLAY
+if st.session_state.search_results is not None:
+    st.divider()
+    st.subheader("🎯 Best Match Leads")
+    st.dataframe(st.session_state.search_results, use_container_width=True)
+    
+    # Map View
+    st.subheader("📍 Proximity Analysis")
+    m = folium.Map(location=[17.3297, 76.8343], zoom_start=12)
+    folium.Marker([17.3297, 76.8343], popup=w_name, icon=folium.Icon(color='red', icon='warehouse', prefix='fa')).add_to(m)
+    st_folium(m, width=1200, height=400)
+    
+    # Export
+    csv = st.session_state.search_results.to_csv(index=False).encode('utf-8')
+    st.download_button("📥 Download Lead List", data=csv, file_name="warehouse_leads.csv", mime="text/csv")
