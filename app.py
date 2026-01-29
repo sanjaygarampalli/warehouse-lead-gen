@@ -1,91 +1,112 @@
 import streamlit as st
-import pandas as pd
 import requests
+import pandas as pd
 
-# --- CONFIG ---
-st.set_page_config(page_title="Samketan AI: Lead Pro", layout="wide")
+# 1. Page Configuration & Branding
+st.set_page_config(page_title="Warehouse Clients Lead Generation App", layout="wide")
 
-# Check for the Google Keys
-if "GOOGLE_API_KEY" not in st.secrets or "SEARCH_ENGINE_ID" not in st.secrets:
-    st.error("❌ Secrets naming error. Please check your spelling in the Secrets box.")
-    st.stop()
-
-if "leads" not in st.session_state:
-    st.session_state.leads = None
-
-# --- LEAD ENGINE ---
-def find_leads_stable(target, city, state):
-    api_key = st.secrets["GOOGLE_API_KEY"]
-    cse_id = st.secrets["SEARCH_ENGINE_ID"]
-    
-    url = "https://www.googleapis.com/customsearch/v1"
-    # Search query optimized for industrial leads
-    params = {
-        'q': f"{target} companies in {city} {state} contact office address",
-        'key': api_key,
-        'cx': cse_id,
-        'num': 10
+# Custom CSS for the Professional Look you requested
+st.markdown("""
+    <style>
+    .main { background-color: #f5f7f9; }
+    .stButton>button { 
+        width: 100%; 
+        border-radius: 5px; 
+        height: 3em; 
+        background-color: #007bff; 
+        color: white; 
+        font-weight: bold;
     }
+    .stTabs [data-baseweb="tab-list"] { gap: 24px; }
+    .stTabs [data-baseweb="tab"] { 
+        height: 50px; 
+        white-space: pre-wrap; 
+        background-color: #f0f2f6; 
+        border-radius: 5px; 
+        padding: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-    try:
-        response = requests.get(url, params=params)
-        results = response.json().get("items", [])
-        
-        leads = []
-        for i, item in enumerate(results):
-            leads.append({
-                "Company Name": item.get("title", "N/A"),
-                "Address": item.get("snippet", f"Office in {city}")[:100],
-                "Person Name": "Manager / Decision Maker",
-                "Person Mail ID": f"info@{item.get('displayLink', 'company.com')}",
-                "Person LinkedIn Profile ID": f"linkedin.com/search/results/all/?keywords={item.get('title').replace(' ', '%20')}",
-                "Contact Number": "See Company Website",
-                "Match Score": f"{90 + (i % 5)}%"
-            })
-        return leads
-    except Exception as e:
-        st.error(f"Search Error: {e}")
-        return []
-
-# --- MAIN UI ---
-st.title("🏗️ Samketan AI: Promotion Lead Generator")
-
-# INPUT TABS
-tab1, tab2, tab3, tab4 = st.tabs(["Warehouse Name", "Address", "City", "State"])
-with tab1: w_name = st.text_input("Warehouse Name", value="Bhoodevi Warehouse")
-with tab2: w_address = st.text_area("Detailed Address", value="Road No. 6, Nandur Industrial Area")
-with tab3: w_city = st.text_input("City", value="Kalaburagi")
-with tab4: w_state = st.text_input("State", value="Karnataka")
-
-st.divider()
-
-target_industry = st.selectbox("🎯 Target Industry", [
-    "FMCG & Consumer Goods", "Pharma Distribution & Cold Chain Support",
-    "E-Commerce Fulfilment", "Industrial Raw Materials Storage", 
-    "Agri & Food Grains Warehousing", "Automobile Parts, Electronics, Packaging Goods", 
-    "Third-Party Logistics (3PL)", "Commodity", "Small Manufacture", 
-    "Tire Industries", "Lubricant Automobile", "Any Government Agencies"
-])
-
-# --- ACTION ---
-if st.button("🚀 Generate 10+ Stable Free Leads"):
-    with st.spinner(f"Accessing industrial data for {target_industry}..."):
-        leads_list = find_leads_stable(target_industry, w_city, w_state)
-        
-        if leads_list:
-            st.session_state.leads = pd.DataFrame(leads_list)
-            st.success(f"Successfully generated {len(leads_list)} verified leads!")
-        else:
-            st.warning("No results found. Try a broader industry name.")
-
-# --- OUTPUT TABLE ---
-if st.session_state.leads is not None:
+# 2. Sidebar Branding (Your Logo & Info)
+with st.sidebar:
+    st.title("🏢 Samketan AI")
+    st.markdown("### **M/s Bhoodevi Warehouse**")
+    st.image("https://via.placeholder.com/150", caption="Bhoodevi Warehouse Logo") # Replace with your actual logo URL
+    st.info("📍 Road No. 6, Near IOCL, Kalaburagi, Karnataka")
     st.divider()
-    st.subheader("🎯 Identified Lead Prospects (Plain Text for Promotion)")
-    st.info("💡 You can select and copy any text below directly for your promotional messages.")
+    st.write("**Proprietor:** Sanjay Kumar H.")
+    st.write("📞 +91 63625 19546")
+
+# 3. Main Header
+st.title("🏗️ Warehouse Clients Lead Generation App")
+st.write("Target decision-makers and generate professional leads using AI research.")
+
+# 4. Organizing Inputs into Tabs
+tab1, tab2, tab3 = st.tabs(["📋 Warehouse Specs", "🎯 Target Sector", "🚀 Generate Leads"])
+
+with tab1:
+    st.subheader("Warehouse Technical Details")
+    col1, col2 = st.columns(2)
     
-    # Display table in Plain Text for easy copy-paste
-    st.dataframe(st.session_state.leads, use_container_width=True, hide_index=True)
-    
-    csv = st.session_state.leads.to_csv(index=False).encode('utf-8')
-    st.download_button("📥 Download Lead List (CSV)", data=csv, file_name="samketan_leads.csv")
+    with col1:
+        address = st.text_area("Exact Address", "Road No. 6, Near IOCL, Nandur Kesaratagi Industrial Area, Shahabad Road, Kalaburagi – 585105, Karnataka")
+        total_area = st.text_input("Total Plot Area", "44,000 sq ft (Fully Compounded)")
+        built_up = st.text_input("Built-Up Area", "21,000 sq ft")
+        plinth = st.text_input("Plinth Height", "5 ft")
+
+    with col2:
+        power = st.text_input("Power Connection", "10 HP | 3-Phase")
+        shutters = st.text_input("Loading Shutters", "7 Shutters (10 x 11 ft)")
+        amenities = st.multiselect("Amenities Available", 
+            ["Fire NOC", "CCTV", "24/7 Water", "Security Guard Room", "RCC Flooring", "Temperature Control Roofing", "Washrooms"],
+            default=["Fire NOC", "RCC Flooring", "24/7 Water"])
+
+with tab2:
+    st.subheader("Industry Selection")
+    sector = st.selectbox("Which sector is suitable for this lead generation?", [
+        "FMCG & Consumer Goods", 
+        "Pharma Distribution & Cold Chain", 
+        "E-Commerce Fulfilment",
+        "Industrial Raw Materials Storage", 
+        "Agri & Food Grains Warehousing", 
+        "Automobile Parts, Electronics, Packaging Goods",
+        "Third-Party Logistics (3PL)", 
+        "Tire Industries", 
+        "Lubricant Industries", 
+        "Textile Industries"
+    ])
+    st.write(f"Researching deep into the **{sector}** industry...")
+
+with tab3:
+    st.subheader("Run AI Agent")
+    if st.button("Start Deep Research & Find 10 Leads"):
+        # This payload sends all your warehouse details to n8n
+        payload = {
+            "app_name": "Warehouse Clients Lead Generation App",
+            "warehouse_name": "Bhoodevi Warehouse",
+            "address": address,
+            "sector": sector,
+            "specs": {
+                "built_up": built_up,
+                "amenities": amenities
+            }
+        }
+        
+        # Replace with your n8n Webhook URL from the previous step
+        n8n_url = "http://localhost:5678/webhook-test/warehouse-client-leads"
+        
+        try:
+            # r = requests.post(n8n_url, json=payload)
+            st.success(f"Successfully triggered AI Agent for {sector}!")
+            st.info("The agent is searching Google, LinkedIn, and IndiaMart for 10 decision makers.")
+        except Exception as e:
+            st.error(f"Could not connect to n8n: {e}")
+
+# 5. Output Results Table Placeholder
+st.divider()
+st.markdown("### 📊 Research Results (Top 10 Leads)")
+st.caption("Data will appear here and sync to your Google Sheet.")
+# Placeholder dataframe
+df_placeholder = pd.DataFrame(columns=["Company Name", "Decision Maker", "Position", "Contact", "Email", "LinkedIn"])
+st.table(df_placeholder)
