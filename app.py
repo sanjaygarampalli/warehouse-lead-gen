@@ -97,7 +97,7 @@ with tab3:
         n8n_url = "http://localhost:5678/webhook-test/warehouse-client-leads"
         
         try:
-            # r = requests.post(n8n_url, json=payload)
+            # (n8n_url, json=payload)
             st.success(f"Successfully triggered AI Agent for {sector}!")
             st.info("The agent is searching Google, LinkedIn, and IndiaMart for 10 decision makers.")
         except Exception as e:
